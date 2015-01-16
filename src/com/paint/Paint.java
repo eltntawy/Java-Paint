@@ -22,6 +22,7 @@ import java.awt.event.MouseMotionListener;
 import java.beans.VetoableChangeListener;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Stack;
 import java.util.logging.Logger;
 import javax.swing.JColorChooser;
 
@@ -37,6 +38,8 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
     private Graphics graphics;
     private int shapesCount;
     List<Shape> shapesVector = new LinkedList<Shape>();
+    Stack<List<Shape>> undoStack = new Stack<List<Shape>>();
+    Stack<List<Shape>> redoStack = new Stack<List<Shape>>();
 
     Image image;
     Graphics graphicsApplet;
@@ -527,9 +530,33 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
             drawShape = new Erase();
 
         } else if (evt.getSource() == btnUndo) {
-            drawRondomStringOnPanel("btnUndo");
+
+            if (!undoStack.isEmpty()) {
+                List<Shape> temp = undoStack.pop();
+                
+                List<Shape> clone = new LinkedList<Shape>();
+                for (Shape s : temp) {
+                    clone.add(s);
+                }
+                
+                redoStack.push(clone);
+                shapesVector.remove(shapesVector.size() - 1);
+                repaint();
+            }
         } else if (evt.getSource() == btnRedo) {
-            drawRondomStringOnPanel("btnRedo");
+            if (!redoStack.isEmpty()) {
+
+                List<Shape> temp = redoStack.pop();
+                
+                List<Shape> clone = new LinkedList<Shape>();
+                for (Shape s : temp) {
+                    clone.add(s);
+                }
+                
+                undoStack.push(clone);
+                shapesVector = temp;
+                repaint();
+            }
         }
 
         if (drawShape != null) {
@@ -700,6 +727,11 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
 
         if (drawShape != null) {
             shapesVector.add(drawShape);
+            List<Shape> clone = new LinkedList<Shape>();
+            for (Shape s : shapesVector) {
+                clone.add(s);
+            }
+            undoStack.push(clone);
         }
     }//GEN-LAST:event_drawPanelMouseReleased
 
