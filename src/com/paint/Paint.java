@@ -5,7 +5,7 @@
  */
 package com.paint;
 
-import com.paint.shape.Circel;
+import com.paint.shape.Circle;
 import com.paint.shape.Erase;
 import com.paint.shape.FreeLine;
 import com.paint.shape.Line;
@@ -115,7 +115,7 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
         chboxIsSold = new java.awt.Checkbox();
         btnUndo = new java.awt.Button();
         btnRedo = new java.awt.Button();
-        panel1 = new java.awt.Panel();
+        jPanel1 = new javax.swing.JPanel();
         sizeSlider = new javax.swing.JSlider();
         paintPanel = new javax.swing.JPanel();
         drawPanel = new java.awt.Panel();
@@ -279,7 +279,8 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
         btnDrawLine.addActionListener(this);
         shapPanel.add(btnDrawLine);
 
-        btnDrawFree.setLabel("Pin");
+        btnDrawFree.setActionCommand("Pen");
+        btnDrawFree.setLabel("Pen");
         btnDrawFree.setMaximumSize(new java.awt.Dimension(50, 25));
         btnDrawFree.setMinimumSize(new java.awt.Dimension(50, 25));
         btnDrawFree.addActionListener(this);
@@ -315,6 +316,8 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
 
         jToolBar1.add(shapPanel);
 
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Pen size"));
+
         sizeSlider.setMajorTickSpacing(1);
         sizeSlider.setMaximum(25);
         sizeSlider.setMinimum(1);
@@ -328,9 +331,9 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
         sizeSlider.setName("Pin size"); // NOI18N
         sizeSlider.setPreferredSize(new java.awt.Dimension(100, 200));
         sizeSlider.addVetoableChangeListener(this);
-        panel1.add(sizeSlider);
+        jPanel1.add(sizeSlider);
 
-        jToolBar1.add(panel1);
+        jToolBar1.add(jPanel1);
 
         toolPanel.add(jToolBar1);
 
@@ -508,7 +511,7 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
         // TODO add your handling code here:
         if (evt.getSource() == btnDrawCircle) {
 
-            drawShape = new Circel(new Point(0, 0), 0);
+            drawShape = new Circle(new Point(0, 0), 0, 0);
 
         } else if (evt.getSource() == btnDrawRect) {
 
@@ -533,12 +536,12 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
 
             if (!undoStack.isEmpty()) {
                 List<Shape> temp = undoStack.pop();
-                
+
                 List<Shape> clone = new LinkedList<Shape>();
                 for (Shape s : temp) {
                     clone.add(s);
                 }
-                
+
                 redoStack.push(clone);
                 shapesVector.remove(shapesVector.size() - 1);
                 repaint();
@@ -547,12 +550,12 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
             if (!redoStack.isEmpty()) {
 
                 List<Shape> temp = redoStack.pop();
-                
+
                 List<Shape> clone = new LinkedList<Shape>();
                 for (Shape s : temp) {
                     clone.add(s);
                 }
-                
+
                 undoStack.push(clone);
                 shapesVector = temp;
                 repaint();
@@ -611,18 +614,18 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
 
             r.setPoint2(new Point(x, y));
 
-        } else if (drawShape instanceof Circel) {
+        } else if (drawShape instanceof Circle) {
 
-            Circel c = (Circel) drawShape;
+            Circle c = (Circle) drawShape;
             drawShape.setColor(btnColor.getBackground());
             drawShape.setSize(sizeSlider.getValue());
             drawShape.setSolid(chboxIsSold.getState());
 
-            double xx = Math.pow(c.getPoint().getX() - x, 2);
-            double yy = Math.pow(c.getPoint().getY() - y, 2);
+            int xx = c.getPoint().getX() - x;
+            int yy = c.getPoint().getY() - y;;
 
-            int distance = (int) Math.sqrt(xx + yy);
-            c.setRadius(distance / 2);
+            c.setRadius1(xx);
+            c.setRadius2(yy);
 
         }
 
@@ -658,9 +661,9 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
 
             drawShape = new Rectangle(new Point(x, y), new Point(x, y));
 
-        } else if (drawShape instanceof Circel) {
 
-            drawShape = new Circel(new Point(x, y), 0);
+
+            drawShape = new Circle(new Point(x, y),0, 0);
 
         }
     }//GEN-LAST:event_drawPanelMousePressed
@@ -704,15 +707,16 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
 
             r.draw(graphics);
 
-        } else if (drawShape instanceof Circel) {
 
-            Circel c = (Circel) drawShape;
 
-            double xx = Math.pow(c.getPoint().getX() - x, 2);
-            double yy = Math.pow(c.getPoint().getY() - y, 2);
+            Circle c = (Circle) drawShape;
+
+            int xx = c.getPoint().getX() - x;
+            int yy = c.getPoint().getY() - y;
 
             int distance = (int) Math.sqrt(xx + yy);
-            c.setRadius(distance / 2);
+            c.setRadius1(xx);
+            c.setRadius2(yy);
 
             c.draw(graphics);
         }
@@ -774,7 +778,7 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
     @Override
     public void repaint() {
         super.repaint();
-        paintShapes();
+        //paintShapes();
     }
 
     @Override
@@ -812,9 +816,9 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
     private java.awt.Checkbox chboxIsSold;
     private javax.swing.JPanel colorPanel;
     private java.awt.Panel drawPanel;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JPanel paintPanel;
-    private java.awt.Panel panel1;
     private javax.swing.JPanel shapPanel;
     private javax.swing.JSlider sizeSlider;
     private javax.swing.JPanel toolPanel;
