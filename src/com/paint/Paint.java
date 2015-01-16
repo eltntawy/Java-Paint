@@ -5,11 +5,20 @@
  */
 package com.paint;
 
+import com.paint.shape.Circel;
+import com.paint.shape.Erase;
+import com.paint.shape.Line;
+import com.paint.shape.Point;
+import com.paint.shape.Rectangle;
 import com.paint.shape.Shape;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.ActionListener;
 import java.awt.event.HierarchyBoundsListener;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.beans.PropertyChangeListener;
+import java.beans.VetoableChangeListener;
 import java.util.Vector;
 import java.util.logging.Logger;
 import javax.swing.JColorChooser;
@@ -18,7 +27,7 @@ import javax.swing.JColorChooser;
  *
  * @author eltntawy
  */
-public class Paint extends java.applet.Applet implements ActionListener {
+public class Paint extends java.applet.Applet implements ActionListener, MouseListener, MouseMotionListener, PropertyChangeListener, VetoableChangeListener {
 
     /**
      * Initializes the applet Paint
@@ -27,12 +36,12 @@ public class Paint extends java.applet.Applet implements ActionListener {
     private int shapesCount;
     Vector<Shape> shapesVector = new Vector<Shape>();
 
+    Shape drawShape;
+
     private static final Logger LOG = Logger.getGlobal();
 
     public void init() {
-        
-        
-        
+
         try {
             java.awt.EventQueue.invokeAndWait(new Runnable() {
                 public void run() {
@@ -81,11 +90,12 @@ public class Paint extends java.applet.Applet implements ActionListener {
         btnDrawRect = new java.awt.Button();
         btnDrawLine = new java.awt.Button();
         btnDrawFree = new java.awt.Button();
-        btnEarse = new java.awt.Button();
+        btnErase = new java.awt.Button();
         chboxIsSold = new java.awt.Checkbox();
         btnUndo = new java.awt.Button();
         btnRedo = new java.awt.Button();
         panel1 = new java.awt.Panel();
+        sizeSlider = new javax.swing.JSlider();
         paintPanel = new javax.swing.JPanel();
         drawPanel = new java.awt.Panel();
 
@@ -100,9 +110,9 @@ public class Paint extends java.applet.Applet implements ActionListener {
         jToolBar1.setOrientation(javax.swing.SwingConstants.VERTICAL);
         jToolBar1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jToolBar1.setDoubleBuffered(true);
-        jToolBar1.setMaximumSize(new java.awt.Dimension(150, 300));
-        jToolBar1.setMinimumSize(new java.awt.Dimension(130, 300));
-        jToolBar1.setPreferredSize(new java.awt.Dimension(130, 500));
+        jToolBar1.setMaximumSize(new java.awt.Dimension(150, 600));
+        jToolBar1.setMinimumSize(new java.awt.Dimension(130, 400));
+        jToolBar1.setPreferredSize(new java.awt.Dimension(130, 600));
 
         colorPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Colors"));
         colorPanel.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -228,7 +238,7 @@ public class Paint extends java.applet.Applet implements ActionListener {
         shapPanel.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         shapPanel.setMaximumSize(new java.awt.Dimension(200, 200));
         shapPanel.setMinimumSize(new java.awt.Dimension(200, 200));
-        shapPanel.setPreferredSize(new java.awt.Dimension(200, 200));
+        shapPanel.setPreferredSize(new java.awt.Dimension(200, 140));
 
         btnDrawCircle.setLabel("Circle");
         btnDrawCircle.setMaximumSize(new java.awt.Dimension(50, 25));
@@ -254,16 +264,17 @@ public class Paint extends java.applet.Applet implements ActionListener {
         btnDrawFree.addActionListener(this);
         shapPanel.add(btnDrawFree);
 
-        btnEarse.setActionCommand("Earse");
-        btnEarse.setLabel("Earse");
-        btnEarse.setMaximumSize(new java.awt.Dimension(50, 25));
-        btnEarse.setMinimumSize(new java.awt.Dimension(50, 25));
-        btnEarse.addActionListener(this);
-        shapPanel.add(btnEarse);
+        btnErase.setActionCommand("Earse");
+        btnErase.setLabel("Earse");
+        btnErase.setMaximumSize(new java.awt.Dimension(50, 25));
+        btnErase.setMinimumSize(new java.awt.Dimension(50, 25));
+        btnErase.addActionListener(this);
+        shapPanel.add(btnErase);
 
         chboxIsSold.setLabel("Sold");
         chboxIsSold.setMaximumSize(new java.awt.Dimension(50, 25));
         chboxIsSold.setMinimumSize(new java.awt.Dimension(50, 25));
+        chboxIsSold.addPropertyChangeListener(this);
         shapPanel.add(chboxIsSold);
 
         btnUndo.setActionCommand("Undo");
@@ -282,6 +293,22 @@ public class Paint extends java.applet.Applet implements ActionListener {
         shapPanel.add(btnRedo);
 
         jToolBar1.add(shapPanel);
+
+        sizeSlider.setMajorTickSpacing(1);
+        sizeSlider.setMaximum(25);
+        sizeSlider.setMinimum(1);
+        sizeSlider.setMinorTickSpacing(1);
+        sizeSlider.setOrientation(javax.swing.JSlider.VERTICAL);
+        sizeSlider.setPaintTicks(true);
+        sizeSlider.setToolTipText("Pin Size");
+        sizeSlider.setValue(5);
+        sizeSlider.setMaximumSize(new java.awt.Dimension(100, 200));
+        sizeSlider.setMinimumSize(new java.awt.Dimension(100, 200));
+        sizeSlider.setName("Pin size"); // NOI18N
+        sizeSlider.setPreferredSize(new java.awt.Dimension(100, 200));
+        sizeSlider.addVetoableChangeListener(this);
+        panel1.add(sizeSlider);
+
         jToolBar1.add(panel1);
 
         toolPanel.add(jToolBar1);
@@ -292,6 +319,8 @@ public class Paint extends java.applet.Applet implements ActionListener {
         paintPanel.setLayout(new java.awt.BorderLayout());
 
         drawPanel.setBackground(new java.awt.Color(255, 255, 255));
+        drawPanel.addMouseListener(this);
+        drawPanel.addMouseMotionListener(this);
         paintPanel.add(drawPanel, java.awt.BorderLayout.CENTER);
 
         add(paintPanel, java.awt.BorderLayout.CENTER);
@@ -361,7 +390,7 @@ public class Paint extends java.applet.Applet implements ActionListener {
         else if (evt.getSource() == btnDrawFree) {
             Paint.this.btnDrawAction(evt);
         }
-        else if (evt.getSource() == btnEarse) {
+        else if (evt.getSource() == btnErase) {
             Paint.this.btnDrawAction(evt);
         }
         else if (evt.getSource() == btnUndo) {
@@ -369,6 +398,57 @@ public class Paint extends java.applet.Applet implements ActionListener {
         }
         else if (evt.getSource() == btnRedo) {
             Paint.this.btnDrawAction(evt);
+        }
+    }
+
+    public void mouseClicked(java.awt.event.MouseEvent evt) {
+    }
+
+    public void mouseEntered(java.awt.event.MouseEvent evt) {
+        if (evt.getSource() == drawPanel) {
+            Paint.this.drawPanelMouseEntered(evt);
+        }
+    }
+
+    public void mouseExited(java.awt.event.MouseEvent evt) {
+        if (evt.getSource() == drawPanel) {
+            Paint.this.drawPanelMouseExited(evt);
+        }
+    }
+
+    public void mousePressed(java.awt.event.MouseEvent evt) {
+        if (evt.getSource() == drawPanel) {
+            Paint.this.drawPanelMousePressed(evt);
+        }
+    }
+
+    public void mouseReleased(java.awt.event.MouseEvent evt) {
+        if (evt.getSource() == drawPanel) {
+            Paint.this.drawPanelMouseReleased(evt);
+        }
+    }
+
+    public void mouseDragged(java.awt.event.MouseEvent evt) {
+        if (evt.getSource() == drawPanel) {
+            Paint.this.drawPanelMouseDragged(evt);
+        }
+    }
+
+    public void mouseMoved(java.awt.event.MouseEvent evt) {
+        if (evt.getSource() == drawPanel) {
+            Paint.this.drawPanelMouseMoved(evt);
+        }
+    }
+
+    public void propertyChange(java.beans.PropertyChangeEvent evt) {
+        if (evt.getSource() == chboxIsSold) {
+            Paint.this.chboxIsSoldPropertyChange(evt);
+        }
+    }
+
+    public void vetoableChange(java.beans.PropertyChangeEvent evt)throws java.beans.PropertyVetoException {
+        if (evt.getSource() == sizeSlider) {
+            Paint.this.sizeSliderVetoableChange(evt);
         }
     }// </editor-fold>//GEN-END:initComponents
 
@@ -406,31 +486,225 @@ public class Paint extends java.applet.Applet implements ActionListener {
             btnColor.setBackground(btnColor15.getBackground());
         } else if (evt.getSource() == btnColor) {
             Color color = JColorChooser.showDialog(this, "Choose your color", btnColor.getBackground());
-            if(color != null)
+            if (color != null) {
                 btnColor.setBackground(color);
+            }
         }
     }//GEN-LAST:event_btnColorAction
 
     private void btnDrawAction(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDrawAction
         // TODO add your handling code here:
         if (evt.getSource() == btnDrawCircle) {
-            drawRondomStringOnPanel("btnDrawCircle");
+
+            drawShape = new Circel(new Point(0, 0), 0);
+
         } else if (evt.getSource() == btnDrawRect) {
-            drawRondomStringOnPanel("btnDrawRect");
+
+            drawShape = new Rectangle(new Point(0, 0), new Point(0, 0));
+
         } else if (evt.getSource() == btnDrawLine) {
-            drawRondomStringOnPanel("btnDrawLine");
+
+            drawShape = new Line(new Point(0, 0), new Point(0, 0));
+
         } else if (evt.getSource() == btnDrawFree) {
-            drawRondomStringOnPanel("btnDrawFree");
-        } else if (evt.getSource() == btnEarse) {
-            drawRondomStringOnPanel("btnEarse");
+
+            drawShape = new Point(0, 0);
+
+        } else if (evt.getSource() == btnErase) {
+
+            drawShape = new Erase(new Point(0, 0));
+
         } else if (evt.getSource() == btnUndo) {
             drawRondomStringOnPanel("btnUndo");
         } else if (evt.getSource() == btnRedo) {
             drawRondomStringOnPanel("btnRedo");
         }
+        
+        if(drawShape != null ) {
+            drawShape.setColor(btnColor.getBackground());
+            drawShape.setSize(sizeSlider.getValue());
+        }
 
     }//GEN-LAST:event_btnDrawAction
 
+    private void drawPanelMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_drawPanelMouseDragged
+        // TODO add your handling code here:
+        int x = evt.getX();
+        int y = evt.getY();
+
+        if(drawShape != null ) {
+            drawShape.setColor(btnColor.getBackground());
+            drawShape.setSize(sizeSlider.getValue());
+        }
+        
+        if (drawShape instanceof Erase) {
+
+            Erase e = (Erase) drawShape;
+            e.setPoint(new Point(x, y));
+
+            e.draw(graphics);
+
+        } else if (drawShape instanceof Point) {
+
+            Point p = (Point) drawShape;
+            p.setX(x);
+            p.setY(y);
+            
+            p.draw(graphics);
+            
+            shapesVector.add(drawShape);
+
+        } else if (drawShape instanceof Line) {
+
+            Line l = (Line) drawShape;
+            l.setPoint2(new Point(x, y));
+
+            l.draw(graphics);
+
+        } else if (drawShape instanceof Rectangle) {
+
+            Rectangle r = (Rectangle) drawShape;
+            r.setPoint2(new Point(x, y));
+
+            r.draw(graphics);
+
+        } else if (drawShape instanceof Circel) {
+
+            Circel c = (Circel) drawShape;
+
+            double xx = Math.pow(c.getPoint().getX() - x, 2);
+            double yy = Math.pow(c.getPoint().getY() - y, 2);
+
+            int distance = (int) Math.sqrt(xx + yy);
+            c.setRadius(distance / 2);
+
+            c.draw(graphics);
+        }
+    }//GEN-LAST:event_drawPanelMouseDragged
+
+    private void drawPanelMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_drawPanelMouseEntered
+        // TODO add your handling code here:
+    }//GEN-LAST:event_drawPanelMouseEntered
+
+    private void drawPanelMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_drawPanelMouseExited
+        // TODO add your handling code here:
+    }//GEN-LAST:event_drawPanelMouseExited
+
+    private void drawPanelMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_drawPanelMouseMoved
+        // TODO add your handling code here:
+        //System.out.println("X : " + evt.getX() + " - Y : " + evt.getY());
+    }//GEN-LAST:event_drawPanelMouseMoved
+
+    private void drawPanelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_drawPanelMousePressed
+        // TODO add your handling code here:
+        int x = evt.getX();
+        int y = evt.getY();
+
+        if(drawShape != null ) {
+            drawShape.setColor(btnColor.getBackground());
+            drawShape.setSize(sizeSlider.getValue());
+        }
+        
+        if (drawShape instanceof Erase) {
+
+            Erase e = (Erase) drawShape;
+            e.setPoint(new Point(x, y));
+
+            e.draw(graphics);
+
+        } else if (drawShape instanceof Point) {
+
+            Point p = (Point) drawShape;
+            p.setX(x);
+            p.setY(y);
+
+            p.draw(graphics);
+
+        } else if (drawShape instanceof Line) {
+
+            Line l = (Line) drawShape;
+            l.setPoint1(new Point(x, y));
+
+        } else if (drawShape instanceof Rectangle) {
+
+            Rectangle r = (Rectangle) drawShape;
+            r.setPoint1(new Point(x, y));
+
+        } else if (drawShape instanceof Circel) {
+
+            Circel c = (Circel) drawShape;
+            c.setPoint(new Point(x, y));
+        }
+    }//GEN-LAST:event_drawPanelMousePressed
+
+    private void drawPanelMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_drawPanelMouseReleased
+        // TODO add your handling code here:
+        int x = evt.getX();
+        int y = evt.getY();
+
+        if(drawShape != null ) {
+            drawShape.setColor(btnColor.getBackground());
+            drawShape.setSize(sizeSlider.getValue());
+        }
+        
+        if (drawShape instanceof Erase) {
+
+            Erase e = (Erase) drawShape;
+            e.setPoint(new Point(x, y));
+
+            e.draw(graphics);
+
+        } else if (drawShape instanceof Point) {
+
+            Point p = (Point) drawShape;
+            p.setX(x);
+            p.setY(y);
+
+            p.draw(graphics);
+
+        } else if (drawShape instanceof Line) {
+
+            Line l = (Line) drawShape;
+            l.setPoint2(new Point(x, y));
+
+            l.draw(graphics);
+
+        } else if (drawShape instanceof Rectangle) {
+
+            Rectangle r = (Rectangle) drawShape;
+            r.setPoint2(new Point(x, y));
+
+            r.draw(graphics);
+
+        } else if (drawShape instanceof Circel) {
+
+            Circel c = (Circel) drawShape;
+
+            double xx = Math.pow(c.getPoint().getX() - x, 2);
+            double yy = Math.pow(c.getPoint().getY() - y, 2);
+
+            int distance = (int) Math.sqrt(xx + yy);
+            c.setRadius(distance / 2);
+
+            c.draw(graphics);
+        }
+
+        shapesVector.add(drawShape);
+    }//GEN-LAST:event_drawPanelMouseReleased
+
+    private void chboxIsSoldPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_chboxIsSoldPropertyChange
+        // TODO add your handling code here:
+        if (drawShape != null) {
+            drawShape.setSolid(chboxIsSold.getState());
+        }
+    }//GEN-LAST:event_chboxIsSoldPropertyChange
+
+    private void sizeSliderVetoableChange(java.beans.PropertyChangeEvent evt)throws java.beans.PropertyVetoException {//GEN-FIRST:event_sizeSliderVetoableChange
+        // TODO add your handling code here:
+        if(drawShape != null) {
+            drawShape.setSize(sizeSlider.getValue());
+        }
+    }//GEN-LAST:event_sizeSliderVetoableChange
 
     private void drawRondomStringOnPanel(String s) {
 
@@ -443,11 +717,12 @@ public class Paint extends java.applet.Applet implements ActionListener {
     }
 
     public void paintShapes() {
-        
-        for(Shape s : shapesVector) {
+
+        for (Shape s : shapesVector) {
             s.draw(graphics);
+            System.out.println(s);
         }
-        
+
     }
 
     // <editor-fold defaultstate="collapsed" desc="Applet Repaint">
@@ -486,7 +761,7 @@ public class Paint extends java.applet.Applet implements ActionListener {
     private java.awt.Button btnDrawFree;
     private java.awt.Button btnDrawLine;
     private java.awt.Button btnDrawRect;
-    private java.awt.Button btnEarse;
+    private java.awt.Button btnErase;
     private java.awt.Button btnRedo;
     private java.awt.Button btnUndo;
     private java.awt.Checkbox chboxIsSold;
@@ -496,6 +771,7 @@ public class Paint extends java.applet.Applet implements ActionListener {
     private javax.swing.JPanel paintPanel;
     private java.awt.Panel panel1;
     private javax.swing.JPanel shapPanel;
+    private javax.swing.JSlider sizeSlider;
     private javax.swing.JPanel toolPanel;
     // End of variables declaration//GEN-END:variables
 // </editor-fold>

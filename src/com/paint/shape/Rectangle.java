@@ -9,7 +9,6 @@ import java.awt.BasicStroke;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Stroke;
-import java.util.logging.Logger;
 
 /**
  *
@@ -19,7 +18,7 @@ public class Rectangle extends Shape {
 
     private Point point1;
     private Point point2;
-    private static final Logger LOG = Logger.getLogger(Rectangle.class.getName());
+    
 
     public Rectangle(Point point1, Point point2) {
         this.point1 = point1;

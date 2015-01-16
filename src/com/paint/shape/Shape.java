@@ -19,7 +19,7 @@ public abstract class Shape {
     protected Color color;
     protected boolean Solid ;
     
-    private static final Logger LOG = Logger.getGlobal();
+    protected static final Logger LOG = Logger.getGlobal();
     
 
     public int getSize() {
