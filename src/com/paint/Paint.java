@@ -612,6 +612,8 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
             drawShape.setSolid(chboxIsSold.getState());
 
             drawShape.draw(graphics);
+            
+            
 
         } else if (drawShape instanceof Line) {
 
@@ -742,6 +744,7 @@ public class Paint extends java.applet.Applet implements ActionListener, MouseLi
 
         if (drawShape != null) {
             shapesVector.add(drawShape);
+            redoStack.removeAllElements();
             List<Shape> clone = new LinkedList<Shape>();
             for (Shape s : shapesVector) {
                 /*if (s instanceof FreeLine) {
